@@ -31,23 +31,41 @@
 #   Si fichier ZIP (vérification via la commande 'file')
 #     désarchiver récursivement ce fichier avec suppression de l'archive
 
-ZIP_TYPE_START="Zip archive data"
-# TODO: il y a aussi "Java archive data" !
+#set -e
+
 UNZIP_SUFFIX=".unzip"
+ZIP_TYPE_REGEXP="(Zip|Java) archive data.*"
 
 SUCCESS=0
-FAIL_ARGS_COUNT=1
-FAIL_FILE_EXIST=2
-FAIL_FILE_READ=3
-FAIL_FILE_TYPE=4
-FAIL_DIR_CONFLICT=5
-FAIL_MAKE_DIR=6
-FAIL_UNZIP=7
+FAILURE=1
+FAIL_ARGS_COUNT=10
+FAIL_ARG_VALID=20
+FAIL_FILE_EXIST=30
+FAIL_FILE_READ=40
+FAIL_FILE_TYPE=50
+FAIL_DIR_CONFLICT=60
+FAIL_MAKE_DIR=70
+FAIL_UNZIP=80
 EXIT_MSG="Abandon"
+
+is_zip_file()
+{
+	[ ! $# -eq 1 ] && return $FAIL_ARGS_COUNT
+
+	file="$1"
+
+	[ -z "$file" ] && return $FAIL_ARG_VALID
+
+	file_type=$(file --brief "${file}")
+
+	[ ! $? -eq 0 ] && return $FAIL_FILE_TYPE
+
+	[[ "${file_type}" =~ $ZIP_TYPE_REGEXP ]]
+}
 
 recursive_unzip()
 {
-	echo "recursive_unzip $*"
+	echo "recursiveUnzip $*"
 
 	[ ! $# -eq 2 ] \
 	 && echo "Nombre d'arguments différent de 2" \
@@ -70,13 +88,9 @@ recursive_unzip()
 	 && echo "Impossible de lire le fichier: $zip_file" \
 	 && echo $EXIT_MSG && return $FAIL_FILE_READ
 
-	file_type=$(file --brief ${zip_file})
-
-	echo "file type: ${file_type}"
-
-	[[ ! ${file_type} == ${ZIP_TYPE_START}* ]] \
-	 && echo "Il ne s'agit pas d'un fichier ZIP." \
-	 && echo $EXIT_MSG && return $FAIL_FILE_TYPE
+	#[[ ! is_zip_file ${zip_file} ]] \
+	 #&& echo "Il ne s'agit pas d'un fichier ZIP." \
+	 #&& echo $EXIT_MSG && return $FAIL_FILE_TYPE
 
         unzip_dir=${zip_file}${UNZIP_SUFFIX}
 
@@ -114,33 +128,42 @@ recursive_unzip()
 	fi
 }
 
+main()
+{
+	echo main
+	exit $SUCCESS
 
-### TESTS ###
+	## TODO put tests in a dedicated script ##
+	
+	recursive_unzip
+	echo "Statut d'exécution : $?"
+	echo
 
-recursive_unzip
-echo "Statut d'exécution : $?"
-echo
+	recursive_unzip one_arg
+	echo "Statut d'exécution : $?"
+	echo
 
-recursive_unzip one_arg
-echo "Statut d'exécution : $?"
-echo
+	recursive_unzip one two three_args
+	echo "Statut d'exécution : $?"
+	echo
 
-recursive_unzip one two three_args
-echo "Statut d'exécution : $?"
-echo
+	recursive_unzip empty.war true
+	echo "Statut d'exécution : $?"
+	echo
 
-recursive_unzip empty.war true
-echo "Statut d'exécution : $?"
-echo
+	recursive_unzip empty.war false
+	echo "Statut d'exécution : $?"
+	echo
 
-recursive_unzip empty.war false
-echo "Statut d'exécution : $?"
-echo
+	recursive_unzip wrong.war true
+	echo "Statut d'exécution : $?"
+	echo
 
-recursive_unzip wrong.war true
-echo "Statut d'exécution : $?"
-echo
+	recursive_unzip valid.war false
+	echo "Statut d'exécution : $?"
+	echo
 
-recursive_unzip valid.war false
-echo "Statut d'exécution : $?"
-echo
+}
+
+[ ! "$TESTING" ] && main
+
