@@ -41,13 +41,27 @@ testEarFile() {
 }
 
 testTarArchive() {
-  echo -n "${FUNCNAME[0]}: " \
-  && echo NOT IMPLEMENTED YET #
+  echo -n "${FUNCNAME[0]}: "   \
+  && cd $(mktemp --directory)   \
+  && touch "file1_for_tar"       \
+  && touch "file2_for_tar"        \
+  && tar cf "file.tar" *"for_tar"  \
+  && ! is_zip_file "file.tar"      \
+  && mv "file.tar" "file"         \
+  && ! is_zip_file "file"       \
+  && echo OK || echo KO       #
 }
 
 testBinaryFile() {
-  echo -n "${FUNCNAME[0]}: " \
-  && echo NOT IMPLEMENTED YET #
+  echo -n "${FUNCNAME[0]}: "           \
+  && cd $(mktemp --directory)           \
+  && echo "0000" > "file.bin"            \
+  && dd bs="1" count="1024" status="none" \
+        if="/dev/urandom" >> "file.bin"   \
+  && ! is_zip_file "file.bin"            \
+  && mv "file.bin" "file"              \
+  && ! is_zip_file "file"           \
+  && echo OK || echo KO         #
 }
 
 testTextFile() {
