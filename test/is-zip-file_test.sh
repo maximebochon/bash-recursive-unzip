@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # vim:et:ft=sh:sts=2:sw=2
 
-#echo -n "Loading unzzzip.sh: "
+# Loading 'is_zip_file' function
+# from 'unzzzip.sh' in test mode:
 TESTING=true . ../unzzzip.sh
-#echo "done"
 
 testZipFile() {
   echo -n "${FUNCNAME[0]}: " \
@@ -15,6 +15,20 @@ testZipFile() {
   && mv "file.zip" "file"     \
   && is_zip_file "file"      \
   && echo OK || echo KO    #
+}
+
+testZZZipFile() {
+  echo -n "${FUNCNAME[0]}: "         \
+  && cd $(mktemp --directory)         \
+  && touch "file1" "file2"             \
+  && zip -q "file" "file1" "file2"      \
+  && zip -q "ffile" "file1" "file.zip"   \
+  && zip -q "fffile"                     \
+         "file2" "file.zip" "ffile.zip" \
+  && is_zip_file "fffile.zip"         \
+  && mv "fffile.zip" "fffile"      \
+  && is_zip_file "fffile"       \
+  && echo OK || echo KO     #
 }
 
 testJarFile() {
@@ -103,6 +117,7 @@ testMoreArguments() {
 
 
 testZipFile
+testZZZipFile
 testJarFile
 testWarFile
 testEarFile
